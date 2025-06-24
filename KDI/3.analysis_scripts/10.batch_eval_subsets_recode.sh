@@ -1,0 +1,36 @@
+#!/bin/bash
+#SBATCH -J eval_subsets_recode
+#SBATCH -n 1
+#SBATCH --cpus-per-task 4
+#SBATCH --mem 80G
+#SBATCH -t 4:00:00
+#SBATCH --array=0-13,400-413,900-913
+#SBATCH --output=logs/slurm-evalsubsets-%A_%a.out
+#SBATCH --error=logs/slurm-evalsubsets-%A_%a.out
+
+INDX=${SLURM_ARRAY_TASK_ID}
+LANDMARK=$((INDX / 100 + 1))
+SUBSET_I=$((INDX % 100 ))
+SELECTION_METHOD=MCP
+OUTCOME=RenalFailure
+MINCORR=0.05
+REDUCTION_METHOD=LOGISTIC2STEP
+FIT_METHOD=REFIT
+CV_CRITERION=AUC_1_10
+BIC_ONLY=F
+UNPENALIZED=T
+USE_Y1=T #NEED TO RUN WITH BOTH T AND F
+
+SUBSETS="OVERALL BLACK WHITE HIS NHIS MALE FEMALE DXSENIOR DXUNDER65 DX1990 DX2000 DX2010 EGFRlt60 EGFRgt60"
+SUBSETS=($SUBSETS)
+SUBSET=${SUBSETS[$((SUBSET_I))]}
+
+echo "landmark is ${LANDMARK} and subset is ${SUBSET}"
+
+#set config in R script
+R CMD BATCH --no-save --no-restore \
+"--args ${SELECTION_METHOD} ${OUTCOME} ${MINCORR} ${CV_CRITERION} ${REDUCTION_METHOD} ${FIT_METHOD} ${LANDMARK} ${BIC_ONLY} ${UNPENALIZED} ${SUBSET} ${USE_Y1}" \
+3.analysis_scripts/10.eval_subsets_recode.R \
+logs/log.10.eval_subsets_recode.select${SELECTION_METHOD}.${OUTCOME}.mincorr${MINCORR}.CVcrit${CV_CRITERION}.reduce${REDUCTION_METHOD}.${FIT_METHOD}.L${LANDMARK}.BIC${BIC_ONLY}.unpenalized${UNPENALIZED}.${SUBSET}.usey1${USE_Y1}.Rout
+
+

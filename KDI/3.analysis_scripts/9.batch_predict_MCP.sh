@@ -1,0 +1,23 @@
+#!/bin/bash
+#SBATCH -J predict_MCP
+#SBATCH -n 1
+#SBATCH --cpus-per-task 4
+#SBATCH --mem 80G
+#SBATCH -t 4:00:00
+#SBATCH --array=1,5,10
+
+SELECTION_METHOD=MCP
+OUTCOME=RenalFailure
+CVCRIT=AUC_1_10
+BIC_ONLY=F
+MINCORR=0.05
+COEFS=PENALIZED
+REDUCTION_METHOD=LOGISTIC2STEP
+LANDMARK=${SLURM_ARRAY_TASK_ID}
+
+R CMD BATCH --no-save --no-restore \
+"--args ${SELECTION_METHOD} ${OUTCOME} ${CVCRIT} ${BIC_ONLY} ${MINCORR} ${COEFS} ${REDUCTION_METHOD} ${LANDMARK}" \
+3.analysis_scripts/9.predict_MCP.R \
+logs/log.9.predict_MCP.select${SELECTION_METHOD}.${OUTCOME}.cvcrit${CVCRIT}.BIConly${BIC_ONLY}.mincorr${MINCORR}.coefs${COEFS}.reduce${REDUCTION_METHOD}.L${LANDMARK}.Rout
+
+
