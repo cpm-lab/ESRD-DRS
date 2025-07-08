@@ -18,7 +18,7 @@ landmark_year <- args[8]
 source("config_mnt.R")
 source("functions.R")
 
-library(fastcmprsk, lib.loc = fastcmprsk_lib)
+library(fastcmprsk)
 library(data.table)
 library(dplyr)
 library(tictoc)
