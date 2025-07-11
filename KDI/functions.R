@@ -33,10 +33,12 @@ Mode <- function(x, na.rm = T) {
   return(rt)
 }
 
+# Convert factor to numeric with literal values rather than factor levels
 fac_numeric <- function(x) {
   as.numeric(as.character(x))
 }
 
+# Get original datetime from the numeric representation
 back_to_date <- function(x) {
   # dates were expressed in years since 1/1/2000
   # they were converted using as.numeric(julian(DeathDateTime,origin=as.Date("2000-01-01")))/365.25]
@@ -44,6 +46,7 @@ back_to_date <- function(x) {
   as.POSIXct(x * 365.25 * 24 * 60 * 60, origin = "2000-01-01")
 }
 
+# Get the numeric representation of just the date, not datetime
 just_date <- function(x) {
   # from the converted values, convert back to date, strip time-of-day info, then use
   # lubridate::decimal_date to scale back to 2000-based representation
@@ -57,9 +60,6 @@ just_date <- function(x) {
 counts <- function(data, ...) {
   dplyr::count(data, ..., sort = T)
 }
-
-
-
 
 ## Function to extract data from a table while documenting the extraction details
 extract.detail.icd <- function(obj, feature_name, pattern, field_name = "ICDCode") {
@@ -121,6 +121,7 @@ extract.detail.icd <- function(obj, feature_name, pattern, field_name = "ICDCode
   return(output_full)
 }
 
+# Extract procedure data while logging a summary of the query and results to export
 extract.detail.proc <- function(feature_name, pattern, field_name = c("CPTCode", "ICD9ProcedureCode", "ICD10ProcedureCode"), exclude = F, exact_match = F) {
   domain <- "Procedures"
   # Push the extraction details to the global object
@@ -170,6 +171,7 @@ extract.detail.proc <- function(feature_name, pattern, field_name = c("CPTCode",
   return(output_full)
 }
 
+# Extract prescription data while logging a summary of the query and results to export
 extract.detail.Rx <- function(obj, feature_name, pattern, field_name, exclude = F, exact_match = F) {
   if (any(!(field_name %in% c("VAClassification", "LocalDrugNameWithDose", "DrugNameWithDose", "DrugNameWithoutDose")))) {
     stop("Not among the supported variable names for medications")
@@ -406,6 +408,7 @@ td_context <- function(obj) {
     select(-c(BirthDate, DmDx_first))
 }
 
+# Number of days between 2 dates
 days_between <- function(t1, t2) {
   d1 <- date_decimal(t1 + 2000)
   d2 <- date_decimal(t2 + 2000)
@@ -413,11 +416,12 @@ days_between <- function(t1, t2) {
   return(days_elapsed)
 }
 
-
+# Standardize
 standardize <- function(x) {
   (x - mean(x, na.rm = T)) / sd(x, na.rm = T)
 }
 
+# Snapshot of tdept data at landmark time
 landmark <- function(data, t) {
   # Get most recent data at time (tstart)
   data %>%
@@ -552,6 +556,7 @@ fcrr_from_fcrrp <- function(fcrrp_model, truth, input_data, lambda, replace_coef
   }
 }
 
+# Predict CIFs for many rows
 predict_fcrr_multirow <- function(model, newdata, times = c(1, 5, 10), covars = NULL, silent = F) {
   if (!silent) {
     tictoc::tic("Generating predicted probabilities from CIF")
@@ -586,7 +591,7 @@ predict_fcrr_multirow <- function(model, newdata, times = c(1, 5, 10), covars = 
   return(z_pred)
 }
 
-
+# Predict CIFs for many rows while calibrating for the S0(t)
 predict_prob_calibrated <- function(ftime, fstatus, horizon, betax, outlier_threshold = 15) {
   # For the purpose of recalibrating for the mean patient predictors, exclude extreme outliers
   nonoutlier_i <- !abs(scale(betax)) > outlier_threshold
@@ -677,7 +682,7 @@ predict_prob_calibrated_cox <- function(ftime, fstatus, horizons, betax, getScor
   }
 }
 
-
+# Predict CIFs for many rows while calibrating for the S0(t) for ALL horizons
 predict_prob_calibrated_allH <- function(ftime, fstatus, horizons, betax) {
   init <- data.frame(betaX = betax)
   for (horizon in horizons) {
@@ -744,7 +749,7 @@ CR_calib_simple_nocmprsk <- function(pred, truth, time) {
   }
 }
 
-
+# Get precision-recall curve
 CR_get_PRC <- function(pred, truth, htime, cause = 1) {
   # Get raw precision-recall curve values for a given single time and predictor
   pred <- signif(pred, 2) # Don't need too many points
@@ -760,6 +765,7 @@ CR_get_PRC <- function(pred, truth, htime, cause = 1) {
   return(init)
 }
 
+# Get area under the precision-recall curve
 CR_get_AUPRC <- function(pred, truth, htime, cause = 1) {
   PRC <- CR_get_PRC(pred, truth, htime, cause)
   AUPRC <- PRC %>%
@@ -772,7 +778,7 @@ CR_get_AUPRC <- function(pred, truth, htime, cause = 1) {
   return(list("PRC" = PRC, "AUPRC" = AUPRC))
 }
 
-
+# Get CI via Bootstrapping for 
 CR_var_bootstrap <- function(truth, pred, cause = 1, htime, n_bootstrap = 0,
                              AUC = TRUE, calib = TRUE, AUPRC = TRUE,
                              calib_nocmprsk = FALSE) {
@@ -931,7 +937,7 @@ eval_measures_fastCrrp <- function(fcrrp_model, input_data, model_truth, newdata
   }
   return(list("pred" = predprobs.all, "performance" = e.all))
 }
-#
+
 # This function gets evaluation metrics for fcrr (or dummy) objects.
 eval_measures_fastCrr <- function(fcrr_model, newdata_z, newdata_truth, htimes = c(1, 5, 10),
                                   n_bootstrap = 0) {
@@ -1047,6 +1053,7 @@ fastCrrpCV <- function(z, truth, fold.i, fold, penalization_method, lambdas, hti
   }
 }
 
+# Based on cross-validation results, select the best lambda (tuning parameter)
 select_best_lambda <- function(CVdata, criterion, minimum_improvement = TRUE, min_improve_by) {
   CVdata <- CVdata %>% filter(converged == 1 & num_covars_selected > 0)
   if (nrow(CVdata) == 0) {
@@ -1156,6 +1163,7 @@ select_best_lambda <- function(CVdata, criterion, minimum_improvement = TRUE, mi
   }
 }
 
+# Subset the data into relevant subgroups
 subset_data <- function(ydat, subset) {
   n_orig <- nrow(ydat)
   if (subset %in% c("Overall", "OVERALL")) {
@@ -1207,7 +1215,7 @@ subset_data <- function(ydat, subset) {
   return(ydat)
 }
 
-
+# Logistic model of outcome with age, sex, race, and variable as covariates
 logmod_coef <- function(data, outcome, variable_name) {
   covars <- unique(c(variable_name, 
                      names(data)[grepl("Gender|Race|age", names(data))]))
@@ -1241,6 +1249,7 @@ get_n_measures <- function(object_name) {
   return(d)
 }
 
+# Read and process a biomarker file
 process_marker <- function(marker_name, marker_file) {
   bmdat <- fread(marker_file) %>%
     dplyr::rename(person_id = PatientICN) %>%
@@ -1253,6 +1262,7 @@ process_marker <- function(marker_name, marker_file) {
   # rm(bmdat, marker_name, marker_file)
 }
 
+# Fill in NAs with 0
 coalesce0 <- function(x) { 
   coalesce(x, 0)
 }
@@ -1311,6 +1321,7 @@ med.gap <- function(data, min_gap_days = 30) {
   return(meds_time)
 }
 
+# Round to the nearest 0.1 year and take the most recent value in this time frame
 yr_round <- function(x) {
   x %>%
     inner_join_quiet(coh_rounded %>% dplyr::select(PatientICN, DeathDate)) %>%
