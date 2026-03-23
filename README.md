@@ -10,7 +10,7 @@ This repository contains the code for analyses in [manuscript name and link here
 
 -   NIH All of Us (AoU) data analysis in the `AOU` folder
 
-# ESRD-DRS Clinical Dashboard Mockup
+## ESRD-DRS Clinical Dashboard Mockup
 <p align="center">
   <img src="esrd_drs_dashboard_mockup.svg" alt="ESRD-DRS Clinical Dashboard Mockup" width="720">
 </p>
