@@ -1,5 +1,4 @@
-# End-Stage Renal Disease Dynamic Risk Score 
-(ESRD-DRS)
+# End-Stage Renal Disease Dynamic Risk Score (ESRD-DRS)
 
 ## Dynamically Predicting ESRD After Development of Diabetes for Millions Across Biobanks
 
